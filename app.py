@@ -2,52 +2,54 @@ import streamlit as st
 
 st.set_page_config(page_title="Kalkulator Frachtu BBA", page_icon="🔴", layout="centered")
 
-# --- POPRAWIONY CSS (WYRAŹNE CZARNE WARTOŚCI) ---
+# --- STYLOWANIE CSS ---
 st.markdown("""
     <style>
-        /* Czerwone tło z przezroczystym logo BBA na środku */
+        /* Tło aplikacji */
         .stApp {
-            background-color: #d32f2f;
-            background-image: linear-gradient(rgba(211, 47, 47, 0.88), rgba(211, 47, 47, 0.88)), 
-                              url('https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png');
-            background-repeat: no-repeat;
-            background-position: center 30%;
-            background-size: 320px;
-            background-attachment: fixed;
+            background-color: #c62828;
+            color: #ffffff;
         }
 
-        /* Biały tekst dla nagłówków i opisów */
-        h1, h2, h3, p, label, .stCaption {
+        /* Stylizacja nagłówków i tekstów */
+        h1, h2, h3, p, label, span {
             color: #ffffff !important;
             font-family: 'Arial', sans-serif;
         }
 
-        /* BIAŁE KAFELKI Z WYNIKAMI - WYRAŹNA CZARNA CZCIONKA */
-        [data-testid="stMetric"] {
-            background-color: #ffffff !important;
+        /* WŁASNE KAFELKI WYNIKOWE */
+        .bba-card {
+            background-color: #ffffff;
             border-radius: 10px;
             padding: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
         }
-
-        /* Wartości liczbowe w kafelkach: czarne, grube */
-        [data-testid="stMetricValue"] div {
-            color: #000000 !important;
-            font-weight: 900 !important;
-            font-size: 1.8rem !important;
-        }
-
-        /* Etykiety nad wartościami (Suma USD itp.): ciemnoszare */
-        [data-testid="stMetricLabel"] label, [data-testid="stMetricLabel"] p {
-            color: #333333 !important;
+        .bba-card-title {
+            color: #555555 !important;
+            font-size: 14px !important;
             font-weight: bold !important;
+            margin-bottom: 5px !important;
+            text-transform: uppercase;
+        }
+        .bba-card-value {
+            color: #000000 !important;
+            font-size: 26px !important;
+            font-weight: 900 !important;
+            margin: 0 !important;
         }
 
-        /* Pola wprowadzania danych (Dropdowny i Inputy) */
+        /* Styling pól formularza */
         div[data-baseweb="select"] > div, input {
             background-color: #ffffff !important;
             color: #000000 !important;
-            border-radius: 6px;
+            border-radius: 6px !important;
+        }
+        
+        /* Kolor ikon i napisów wewnątrz selectboxów */
+        div[data-baseweb="select"] * {
+            color: #000000 !important;
         }
 
         hr {
@@ -59,7 +61,12 @@ st.markdown("""
 # --- HEADER Z LOGO ---
 col_logo, col_title = st.columns([1, 3])
 with col_logo:
-    st.image("https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png", width=140)
+    # Pobieranie logo - jeśli plik lokalny lub z GitHub
+    try:
+        st.image("logo.png", width=140)
+    except:
+        st.markdown("### **BBA**")
+
 with col_title:
     st.title("Kalkulator Frachtu BBA")
     st.caption("Międzynarodowy Transport i Logistyka")
@@ -140,10 +147,15 @@ if service_type == "Kolej LCL (Drobnica)":
     total_pln = total_usd * usd_rate
 
     st.subheader(f"📊 Wycena LCL: {city} ➔ Polska")
+    
+    # RĘCZNIE GENEROWANE KAFELKI
     c1, c2, c3 = st.columns(3)
-    c1.metric("Suma USD", f"${total_usd:,.2f}")
-    c2.metric("Suma PLN", f"{total_pln:,.2f} PLN")
-    c3.metric("Przelicznik", f"{rate_type} (${base_rate_usd}/CBM)")
+    with c1:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma USD</div><div class="bba-card-value">${total_usd:,.2f}</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma PLN</div><div class="bba-card-value">{total_pln:,.2f} PLN</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Przelicznik</div><div class="bba-card-value">{rate_type}</div></div>', unsafe_allow_html=True)
 
     st.write("### Szczegóły składowe (USD):")
     st.write(f"- **Fracht główny (FOB):** ${fob_freight_usd:.2f} USD *(Płatne CBM: {chargeable_cbm:.2f})*")
@@ -158,9 +170,12 @@ elif service_type == "Kolej FCL (RAIL)":
 
     st.subheader(f"📊 Trasa: {pol} ➔ Małaszewicze")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Stawka USD", f"${rate_usd:,.2f}")
-    c2.metric("Suma PLN", f"{total_pln:,.2f} PLN")
-    c3.metric("Sprzęt", container)
+    with c1:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Stawka USD</div><div class="bba-card-value">${rate_usd:,.2f}</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma PLN</div><div class="bba-card-value">{total_pln:,.2f} PLN</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Sprzęt</div><div class="bba-card-value">{container}</div></div>', unsafe_allow_html=True)
 
 elif service_type == "Morski FCL (SEA)":
     pol = st.selectbox("POL (Port załadunku)", list(SEA_FCL_RATES.keys()))
@@ -170,6 +185,9 @@ elif service_type == "Morski FCL (SEA)":
 
     st.subheader(f"📊 Trasa: {pol} ➔ Gdańsk / Gdynia")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Stawka USD", f"${rate_usd:,.2f}")
-    c2.metric("Suma PLN", f"{total_pln:,.2f} PLN")
-    c3.metric("Sprzęt", container)
+    with c1:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Stawka USD</div><div class="bba-card-value">${rate_usd:,.2f}</div></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma PLN</div><div class="bba-card-value">{total_pln:,.2f} PLN</div></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Sprzęt</div><div class="bba-card-value">{container}</div></div>', unsafe_allow_html=True)
