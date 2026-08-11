@@ -21,14 +21,14 @@ incoterm = st.radio("Warunki dostawy (Incoterm)", ["FOB (Dostawca płaci za tran
 # --- PRZYKŁADOWY CENNIK (BAZA STAWEK BIZNESOWYCH) ---
 # Stawki w USD (można łatwo zmieniać na własne)
 RATES = {
-    "Morski LCL (dodrobnica)": {"unit": "CBM", "price": 85, "min": 150, "time": "35-45 dni"},
-    "Morski FCL (20' DV)": {"unit": "FLAT", "price": 2100, "min": 2100, "time": "35-40 dni"},
-    "Kolejowy LCL": {"unit": "CBM", "price": 160, "min": 250, "time": "16-22 dni"},
+    "Morski LCL (dodrobnica)": {"unit": "CBM", "price": 100, "min": 200, "time": "45-60 dni"},
+    "Morski FCL (20' DV)": {"unit": "FLAT", "price": 2100, "min": 2100, "time": "45-60 dni"},
+    "Kolejowy LCL": {"unit": "CBM", "price": 160, "min": 250, "time": "16-25 dni"},
     "Lotniczy": {"unit": "KG", "price": 4.8, "min": 120, "time": "4-7 dni"}
 }
 
 USD_PLN = 4.00  # Stały przelicznik lub pobierany z API NBP
-CUSTOMS_FEE = 350 # Koszt odprawy celnej w PLN
+CUSTOMS_FEE = 250 # Koszt odprawy celnej w PLN
 THC_FEE = 450     # Koszt obsługi portowej/terminalowej w PLN
 
 # --- OBLICZENIA ---
