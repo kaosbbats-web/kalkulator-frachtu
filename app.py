@@ -2,52 +2,54 @@ import streamlit as st
 
 st.set_page_config(page_title="Kalkulator Frachtu BBA", page_icon="🔴", layout="centered")
 
-# --- CZERWONE TŁO Z BIAŁYMI ELEMENATMI I LOGO W TLE ---
+# --- POPRAWIONY CSS (WYRAŹNE CZARNE WARTOŚCI) ---
 st.markdown("""
     <style>
-        /* Czerwone tło z logo na środku */
+        /* Czerwone tło z przezroczystym logo BBA na środku */
         .stApp {
             background-color: #d32f2f;
             background-image: linear-gradient(rgba(211, 47, 47, 0.88), rgba(211, 47, 47, 0.88)), 
                               url('https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png');
             background-repeat: no-repeat;
-            background-position: center 35%;
-            background-size: 380px;
+            background-position: center 30%;
+            background-size: 320px;
             background-attachment: fixed;
-            color: #ffffff;
         }
 
-        /* Białe nagłówki i teksty */
+        /* Biały tekst dla nagłówków i opisów */
         h1, h2, h3, p, label, .stCaption {
             color: #ffffff !important;
             font-family: 'Arial', sans-serif;
         }
 
-        /* Karty z wynikami - białe bloki z ciemnym tekstem dla czytelności */
+        /* BIAŁE KAFELKI Z WYNIKAMI - WYRAŹNA CZARNA CZCIONKA */
         [data-testid="stMetric"] {
-            background-color: #ffffff;
-            border-radius: 12px;
+            background-color: #ffffff !important;
+            border-radius: 10px;
             padding: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Wartości wewnątrz kart wyników */
-        [data-testid="stMetricValue"] {
-            color: #d32f2f !important;
-            font-weight: bold;
-        }
-        [data-testid="stMetricLabel"] {
-            color: #333333 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         }
 
-        /* Białe tła dla pól formularza */
-        .stSelectbox div[data-baseweb="select"], .stNumberInput input {
+        /* Wartości liczbowe w kafelkach: czarne, grube */
+        [data-testid="stMetricValue"] div {
+            color: #000000 !important;
+            font-weight: 900 !important;
+            font-size: 1.8rem !important;
+        }
+
+        /* Etykiety nad wartościami (Suma USD itp.): ciemnoszare */
+        [data-testid="stMetricLabel"] label, [data-testid="stMetricLabel"] p {
+            color: #333333 !important;
+            font-weight: bold !important;
+        }
+
+        /* Pola wprowadzania danych (Dropdowny i Inputy) */
+        div[data-baseweb="select"] > div, input {
             background-color: #ffffff !important;
             color: #000000 !important;
-            border-radius: 8px;
+            border-radius: 6px;
         }
 
-        /* Biała linia podziału */
         hr {
             border-top: 2px solid #ffffff;
         }
@@ -57,17 +59,14 @@ st.markdown("""
 # --- HEADER Z LOGO ---
 col_logo, col_title = st.columns([1, 3])
 with col_logo:
-    try:
-        st.image("https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png", width=140)
-    except:
-        pass
+    st.image("https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png", width=140)
 with col_title:
     st.title("Kalkulator Frachtu BBA")
     st.caption("Międzynarodowy Transport i Logistyka")
 
 st.divider()
 
-# --- PEŁNA BAZA STAWEK RAIL LCL ---
+# --- BAZA STAWEK RAIL LCL ---
 RAIL_LCL_CITIES = {
     "CHONGQING": {"1:300": 100, "1:500": 107}, "CHENGDU": {"1:300": 80, "1:500": 80},
     "XI'AN": {"1:300": 100, "1:500": 107}, "BEIJING": {"1:300": 107, "1:500": 114},
@@ -86,13 +85,13 @@ RAIL_LCL_CITIES = {
     "ZHENGZHOU": {"1:300": 105, "1:500": 112}
 }
 
-# --- PEŁNA BAZA STAWEK RAIL FCL ---
+# --- BAZA STAWEK RAIL FCL ---
 RAIL_FCL_RATES = {
     "Shanghai": 4800, "Shenzhen": 4500, "Ningbo": 4700, "Tianjin": 5100,
     "Xiamen": 4800, "Dalian": 5400, "Wuhan": 4600, "Changsha": 4100, "Chengdu": 4100
 }
 
-# --- PEŁNA BAZA STAWEK SEA FCL ---
+# --- BAZA STAWEK SEA FCL ---
 SEA_FCL_RATES = {
     "Shanghai": {"20'DV": 625, "40'HC": 1075}, "Shenzhen": {"20'DV": 625, "40'HC": 1075},
     "Ningbo": {"20'DV": 625, "40'HC": 1075}, "Guangzhou": {"20'DV": 675, "40'HC": 1075},
