@@ -62,8 +62,7 @@ with col_title:
 
 st.divider()
 
-# --- BAZA STAWEK WARSAW, POLAND (Z GRAFIKI) ---
-# Format: "MIASTO": {"less_300": stawka, "more_300": stawka}
+# --- BAZA STAWEK WARSAW, POLAND ---
 RAIL_LCL_CITIES = {
     "CHENGDU": {"less_300": 145, "more_300": 145},
     "SHENZHEN": {"less_300": 165, "more_300": 172},
@@ -93,7 +92,8 @@ RAIL_LCL_CITIES = {
     "BEIJING": {"less_300": 172, "more_300": 179}
 }
 
-def get_cbm_margin(cbm):
+# MARŻA DLA KLIENTA (DODAWANA DO STAWKI BAZOWEJ ZA CBM)
+def get_client_margin(cbm):
     if cbm <= 1.0:
         return 150
     elif cbm <= 4.0:
@@ -134,20 +134,17 @@ else:
         weight = st.number_input("Waga całkowita (kg)", min_value=1.0, value=500.0, step=10.0)
         volume = st.number_input("Objętość (CBM)", min_value=0.1, value=2.0, step=0.1)
 
-    # Obliczenie gęstości
+    # Obliczenie gęstości i płatnego CBM
     density_ratio = weight / volume if volume > 0 else 0
     is_over_300 = density_ratio > 300
-    
-    # Przeliczeniowe CBM (waga płatna)
     rate_key = "more_300" if is_over_300 else "less_300"
     chargeable_cbm = max(volume, weight / 300)
 
-    # Pobranie stawek
+    # Obliczenie stawki końcowej dla klienta (Tabela + Wartość zależna od CBM)
     base_rate_usd = RAIL_LCL_CITIES[city][rate_key]
-    margin_per_cbm = get_cbm_margin(chargeable_cbm)
+    margin = get_client_margin(chargeable_cbm)
+    final_rate_per_cbm = base_rate_usd + margin
     
-    # Końcowa stawka za CBM (baza + narzut z przedziału)
-    final_rate_per_cbm = base_rate_usd + margin_per_cbm
     fob_freight_usd = chargeable_cbm * final_rate_per_cbm
 
     exw_total_usd = 0
@@ -169,11 +166,9 @@ else:
     with c3:
         st.markdown(f'<div class="bba-card"><div class="bba-card-title">Stawka za CBM</div><div class="bba-card-value">${final_rate_per_cbm:.0f}</div></div>', unsafe_allow_html=True)
 
-    st.write("### Szczegóły wyliczenia:")
-    st.write(f"- **Płatne CBM:** `{chargeable_cbm:.2f} CBM` *(Waga: {weight} kg | Objętość: {volume} CBM)*")
-    st.write(f"- **Stawka bazowa:** `${base_rate_usd}/CBM` *({'waga > 300kg/CBM' if is_over_300 else 'waga < 300kg/CBM'})*")
-    st.write(f"- **Dopłata BBA (przedział CBM):** `+${margin_per_cbm}/CBM` *(dla {chargeable_cbm:.2f} CBM)*")
-    st.write(f"- **Łączny fracht główny (FOB):** `${fob_freight_usd:.2f} USD`")
+    st.write("### Podsumowanie wyceny:")
+    st.write(f"- **Płatna objętość:** `{chargeable_cbm:.2f} CBM` *(Waga: {weight:.0f} kg | Objętość: {volume:.2f} CBM)*")
+    st.write(f"- **Fracht główny (FOB):** `${fob_freight_usd:.2f} USD` *(Stawka: ${final_rate_per_cbm:.0f}/CBM)*")
     
     if incoterm == "EXW":
-        st.write(f"- **Koszty lokalne EXW w Chinach:** `${exw_total_usd:.2f} USD` *(Dojazd, Dokumenty, Licencja, Odprawa)*")
+        st.write(f"- **Koszty lokalne EXW w Chinach:** `${exw_total_usd:.2f} USD` *(Odbiór z fabryki, odprawa i dokumenty)*")
