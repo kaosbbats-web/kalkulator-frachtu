@@ -1,57 +1,80 @@
 import streamlit as st
 
-st.set_page_config(page_title="Kalkulator Frachtu BBATS", page_icon="📦", layout="centered")
+st.set_page_config(page_title="Kalkulator Frachtu BBA", page_icon="🔴", layout="centered")
 
-LOGO_URL = "https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png"
+# --- CZERWONO-BIAŁY MOTYW ORAZ LOGO W TLE ---
+st.markdown("""
+    <style>
+        .stApp {
+            background-color: #ffffff;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.93)), 
+                              url('https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png');
+            background-repeat: no-repeat;
+            background-position: center 35%;
+            background-size: 380px;
+            background-attachment: fixed;
+        }
+        h1, h2, h3 {
+            color: #d32f2f !important;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+        }
+        [data-testid="stMetric"] {
+            background-color: #ffffff;
+            border: 2px solid #d32f2f;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.08);
+        }
+        .stSelectbox, .stNumberInput {
+            background-color: #ffffff;
+            border-radius: 8px;
+        }
+        hr {
+            border-top: 2px solid #d32f2f;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
-try:
-    st.image(LOGO_URL, width=220)
-except:
-    pass
+# --- HEADER Z LOGO ---
+col_logo, col_title = st.columns([1, 3])
+with col_logo:
+    try:
+        st.image("https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png", width=140)
+    except:
+        pass
+with col_title:
+    st.title("Kalkulator Frachtu BBA")
+    st.caption("Międzynarodowy Transport i Logistyka")
 
-st.title("📦 Kalkulator Frachtu BBATS")
-st.caption("Kompleksowe wyceny RAIL (LCL/FCL) oraz SEA (FCL)")
+st.divider()
 
-# --- BAZA STAWEK RAIL LCL ---
+# --- PEŁNA BAZA STAWEK RAIL LCL ---
 RAIL_LCL_CITIES = {
-    "CHONGQING": {"1:300": 100, "1:500": 107},
-    "CHENGDU": {"1:300": 80, "1:500": 80},
-    "XI'AN": {"1:300": 100, "1:500": 107},
-    "BEIJING": {"1:300": 107, "1:500": 114},
-    "TIANJIN": {"1:300": 105, "1:500": 112},
-    "SHIJIAZHUANG": {"1:300": 257, "1:500": 264},
-    "QINGDAO": {"1:300": 105, "1:500": 112},
-    "JINAN": {"1:300": 257, "1:500": 264},
-    "GUANGZHOU": {"1:300": 100, "1:500": 107},
-    "SHENZHEN": {"1:300": 100, "1:500": 107},
-    "ZHONGSHAN": {"1:300": 257, "1:500": 264},
-    "SHANTOU": {"1:300": 107, "1:500": 114},
-    "FUZHOU": {"1:300": 105, "1:500": 112},
-    "XIAMEN": {"1:300": 107, "1:500": 114},
-    "SHANGHAI": {"1:300": 100, "1:500": 107},
-    "NINGBO": {"1:300": 100, "1:500": 107},
-    "HANGZHOU": {"1:300": 105, "1:500": 112},
-    "YIWU": {"1:300": 105, "1:500": 112},
-    "CHANGSHA": {"1:300": 100, "1:500": 107},
-    "TAIZHOU": {"1:300": 257, "1:500": 264},
-    "WENZHOU": {"1:300": 105, "1:500": 112},
-    "NANJING": {"1:300": 257, "1:500": 264},
-    "WUXI": {"1:300": 105, "1:500": 112},
-    "KUNSHAI": {"1:300": 257, "1:500": 264},
-    "SUZHOU": {"1:300": 105, "1:500": 112},
-    "WUHAN": {"1:300": 105, "1:500": 112},
-    "LIAOCHENG": {"1:300": 257, "1:500": 264},
-    "HEFEI": {"1:300": 105, "1:500": 112},
+    "CHONGQING": {"1:300": 100, "1:500": 107}, "CHENGDU": {"1:300": 80, "1:500": 80},
+    "XI'AN": {"1:300": 100, "1:500": 107}, "BEIJING": {"1:300": 107, "1:500": 114},
+    "TIANJIN": {"1:300": 105, "1:500": 112}, "SHIJIAZHUANG": {"1:300": 257, "1:500": 264},
+    "QINGDAO": {"1:300": 105, "1:500": 112}, "JINAN": {"1:300": 257, "1:500": 264},
+    "GUANGZHOU": {"1:300": 100, "1:500": 107}, "SHENZHEN": {"1:300": 100, "1:500": 107},
+    "ZHONGSHAN": {"1:300": 257, "1:500": 264}, "SHANTOU": {"1:300": 107, "1:500": 114},
+    "FUZHOU": {"1:300": 105, "1:500": 112}, "XIAMEN": {"1:300": 107, "1:500": 114},
+    "SHANGHAI": {"1:300": 100, "1:500": 107}, "NINGBO": {"1:300": 100, "1:500": 107},
+    "HANGZHOU": {"1:300": 105, "1:500": 112}, "YIWU": {"1:300": 105, "1:500": 112},
+    "CHANGSHA": {"1:300": 100, "1:500": 107}, "TAIZHOU": {"1:300": 257, "1:500": 264},
+    "WENZHOU": {"1:300": 105, "1:500": 112}, "NANJING": {"1:300": 257, "1:500": 264},
+    "WUXI": {"1:300": 105, "1:500": 112}, "KUNSHAI": {"1:300": 257, "1:500": 264},
+    "SUZHOU": {"1:300": 105, "1:500": 112}, "WUHAN": {"1:300": 105, "1:500": 112},
+    "LIAOCHENG": {"1:300": 257, "1:500": 264}, "HEFEI": {"1:300": 105, "1:500": 112},
     "ZHENGZHOU": {"1:300": 105, "1:500": 112}
 }
 
-# --- BAZA STAWEK FCL ---
+# --- PEŁNA BAZA STAWEK RAIL FCL ---
 RAIL_FCL_RATES = {
-    "Shanghai": {"40'HC": 4800}, "Shenzhen": {"40'HC": 4500}, "Ningbo": {"40'HC": 4700},
-    "Tianjin": {"40'HC": 5100}, "Xiamen": {"40'HC": 4800}, "Dalian": {"40'HC": 5400},
-    "Wuhan": {"40'HC": 4600}, "Changsha": {"40'HC": 4100}, "Chengdu": {"40'HC": 4100}
+    "Shanghai": 4800, "Shenzhen": 4500, "Ningbo": 4700, "Tianjin": 5100,
+    "Xiamen": 4800, "Dalian": 5400, "Wuhan": 4600, "Changsha": 4100, "Chengdu": 4100
 }
 
+# --- PEŁNA BAZA STAWEK SEA FCL ---
 SEA_FCL_RATES = {
     "Shanghai": {"20'DV": 625, "40'HC": 1075}, "Shenzhen": {"20'DV": 625, "40'HC": 1075},
     "Ningbo": {"20'DV": 625, "40'HC": 1075}, "Guangzhou": {"20'DV": 675, "40'HC": 1075},
@@ -67,12 +90,13 @@ def get_pickup_cost(cbm):
     elif cbm <= 12: return 85
     else: return 95
 
-# --- FORMULARZ ---
-service_type = st.selectbox("Wybierz usługę", ["Kolej LCL (Drobnica)", "Kolej FCL (RAIL)", "Morski FCL (SEA)"])
+# --- FORMULARZ WYBORU ---
+service_type = st.selectbox("Środek transportu", ["Kolej LCL (Drobnica)", "Kolej FCL (RAIL)", "Morski FCL (SEA)"])
 usd_rate = st.number_input("Kurs USD/PLN", min_value=3.0, value=4.00, step=0.01)
 
 st.divider()
 
+# --- LOGIKA OBLICZEŃ ---
 if service_type == "Kolej LCL (Drobnica)":
     col1, col2 = st.columns(2)
     with col1:
@@ -102,12 +126,17 @@ if service_type == "Kolej LCL (Drobnica)":
     c1, c2, c3 = st.columns(3)
     c1.metric("Suma USD", f"${total_usd:,.2f}")
     c2.metric("Suma PLN", f"{total_pln:,.2f} PLN")
-    c3.metric("Stawka za CBM", f"${base_rate_usd}")
+    c3.metric("Przelicznik", f"{rate_type} (${base_rate_usd}/CBM)")
+
+    st.write("### Szczegóły składowe (USD):")
+    st.write(f"- **Fracht główny (FOB):** ${fob_freight_usd:.2f} USD *(Płatne CBM: {chargeable_cbm:.2f})*")
+    if incoterm == "EXW":
+        st.write(f"- **Koszty lokalne EXW (Chiny):** ${exw_total_usd:.2f} USD *(Dojazd, Dokumenty, Licencja, Odprawa)*")
 
 elif service_type == "Kolej FCL (RAIL)":
     pol = st.selectbox("POL (Port załadunku)", list(RAIL_FCL_RATES.keys()))
     container = st.selectbox("Typ kontenera", ["40'HC"])
-    rate_usd = RAIL_FCL_RATES[pol][container]
+    rate_usd = RAIL_FCL_RATES[pol]
     total_pln = rate_usd * usd_rate
 
     st.subheader(f"📊 Trasa: {pol} ➔ Małaszewicze")
