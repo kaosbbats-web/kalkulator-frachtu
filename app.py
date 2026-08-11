@@ -2,36 +2,54 @@ import streamlit as st
 
 st.set_page_config(page_title="Kalkulator Frachtu BBA", page_icon="🔴", layout="centered")
 
-# --- CZERWONO-BIAŁY MOTYW ORAZ LOGO W TLE ---
+# --- CZERWONE TŁO Z BIAŁYMI ELEMENATMI I LOGO W TLE ---
 st.markdown("""
     <style>
+        /* Czerwone tło z logo na środku */
         .stApp {
-            background-color: #ffffff;
-            background-image: linear-gradient(rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.93)), 
+            background-color: #d32f2f;
+            background-image: linear-gradient(rgba(211, 47, 47, 0.88), rgba(211, 47, 47, 0.88)), 
                               url('https://raw.githubusercontent.com/kaosbbats-web/kalkulator-frachtu/main/logo.png');
             background-repeat: no-repeat;
             background-position: center 35%;
             background-size: 380px;
             background-attachment: fixed;
+            color: #ffffff;
         }
-        h1, h2, h3 {
-            color: #d32f2f !important;
+
+        /* Białe nagłówki i teksty */
+        h1, h2, h3, p, label, .stCaption {
+            color: #ffffff !important;
             font-family: 'Arial', sans-serif;
-            font-weight: bold;
         }
+
+        /* Karty z wynikami - białe bloki z ciemnym tekstem dla czytelności */
         [data-testid="stMetric"] {
             background-color: #ffffff;
-            border: 2px solid #d32f2f;
             border-radius: 12px;
             padding: 15px;
-            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.08);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         }
-        .stSelectbox, .stNumberInput {
-            background-color: #ffffff;
+        
+        /* Wartości wewnątrz kart wyników */
+        [data-testid="stMetricValue"] {
+            color: #d32f2f !important;
+            font-weight: bold;
+        }
+        [data-testid="stMetricLabel"] {
+            color: #333333 !important;
+        }
+
+        /* Białe tła dla pól formularza */
+        .stSelectbox div[data-baseweb="select"], .stNumberInput input {
+            background-color: #ffffff !important;
+            color: #000000 !important;
             border-radius: 8px;
         }
+
+        /* Biała linia podziału */
         hr {
-            border-top: 2px solid #d32f2f;
+            border-top: 2px solid #ffffff;
         }
     </style>
 """, unsafe_allow_html=True)
