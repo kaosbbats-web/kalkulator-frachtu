@@ -4,7 +4,7 @@ st.set_page_config(page_title="Kalkulator Frachtu - BBATS", page_icon="🚆", la
 
 # --- TUTAJ WKLEJ LINK DO LOGO BBATS ---
 # Podmień poniższy adres na bezpośredni link do Waszego logo PNG/SVG
-LOGO_URL = "https://bbats.pl/wp-content/uploads/2024/06/DSC09777-1.jpg#128"
+LOGO_URL = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSckOvYDAd2OtrIpos8b4aAm_OR2xgFTONnHhLMgDjHvOeo4DPD8W3v-s4&s=10"
 
 # --- WYŚWIETLANIE LOGO I NAGŁÓWKA ---
 try:
