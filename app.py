@@ -4,7 +4,7 @@ import requests
 st.set_page_config(page_title="Kalkulator Frachtu BBA", page_icon="🔴", layout="centered")
 
 # --- AUTOMATYCZNE POBIERANIE KURSU NBP ---
-@st.cache_data(ttl=3600)  # Aktualizacja kursu co 1h
+@st.cache_data(ttl=3600)
 def get_nbp_rate(currency_code):
     try:
         url = f"https://api.nbp.pl/api/exchangerates/rates/a/{currency_code}/?format=json"
@@ -52,7 +52,7 @@ st.markdown("""
             font-weight: 900 !important;
             margin: 0 !important;
         }
-        div[data-baseweb="select"] > div, input {
+        div[data-baseweb="select"] > div, input, textarea {
             background-color: #ffffff !important;
             color: #000000 !important;
             border-radius: 6px !important;
@@ -60,6 +60,25 @@ st.markdown("""
         div[data-baseweb="select"] * {
             color: #000000 !important;
         }
+        
+        /* Czerwone przyciski akcji */
+        div.stButton > button {
+            width: 100%;
+            background-color: #ffffff !important;
+            color: #c62828 !important;
+            font-weight: bold !important;
+            font-size: 16px !important;
+            border-radius: 8px !important;
+            border: 2px solid #ffffff !important;
+            padding: 10px 0 !important;
+            transition: all 0.3s ease;
+        }
+        div.stButton > button:hover {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            border-color: #000000 !important;
+        }
+
         hr {
             border-top: 2px solid #ffffff;
         }
@@ -125,6 +144,39 @@ def get_pickup_cost(cbm):
     elif cbm <= 12: return 85
     else: return 95
 
+# --- DIALOGI / FORMULARZE ---
+@st.dialog("📋 Formularz Zlecenia Transportu")
+def order_dialog(city, total_val, curr):
+    st.write(f"Zlecenie dla trasy: **{city} ➔ Warszawa** ({total_val})")
+    with st.form("order_form"):
+        company = st.text_input("Nazwa firmy *")
+        name = st.text_input("Imię i nazwisko *")
+        phone = st.text_input("Numer telefonu *")
+        email = st.text_input("Adres e-mail *")
+        notes = st.text_area("Dodatkowe uwagi / gotowość towaru")
+        
+        submitted = st.form_submit_button("Wyślij zlecenie")
+        if submitted:
+            if company and name and phone and email:
+                st.success("Dziękujemy! Zlecenie zostało przyjęte. Nasz spedytor skontaktuje się z Tobą w ciągu 30 minut.")
+            else:
+
+                st.error("Wypełnij wszystkie pola oznaczone gwiazdką (*).")
+
+@st.dialog("📞 Szybki kontakt z ekspertem BBA")
+def expert_dialog():
+    st.markdown("""
+        <div style="text-align: center; padding: 10px;">
+            <h3 style="color: #c62828 !important; margin-bottom: 10px;">Cześć!</h3>
+            <p style="color: #333333 !important; font-size: 16px;">Czy chcesz, żeby nasz spedytor oddzwonił do Ciebie w sprawie tej wyceny?</p>
+            <hr style="border-top: 1px solid #ddd;">
+            <p style="color: #555555 !important;"><b>Infolinia BBA Transport System:</b><br>
+            <a href="tel:+48228123456" style="font-size: 20px; font-weight: bold; color: #c62828; text-decoration: none;">+48 22 812 34 56</a></p>
+            <p style="color: #555555 !important;"><b>E-mail:</b> wyceny@bbatransport.spe</p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.link_button("🌐 Przejdź do strony BBA Transport", "https://bbatransport.eu/", use_container_width=True)
+
 # --- FORMULARZ WYBORU ---
 service_type = st.selectbox(
     "Środek transportu", 
@@ -134,7 +186,6 @@ service_type = st.selectbox(
 if "W BUDOWIE" in service_type:
     st.warning("🚧 Ta usługa jest obecnie w budowie. Wybierz **Kolej LCL (Drobnica)**.")
 else:
-    # Wybór waluty docelowej wyceny
     target_currency = st.radio("Waluta wyceny dla klienta", ["PLN", "USD", "EUR"], horizontal=True)
 
     st.divider()
@@ -169,7 +220,6 @@ else:
     total_pln = total_usd * nbp_usd
     total_eur = total_pln / nbp_eur if nbp_eur > 0 else 0
 
-    # Przeliczanie wybranej waluty docelowej
     if target_currency == "PLN":
         display_total = f"{total_pln:,.2f} PLN"
         display_rate = f"{(final_rate_per_cbm_usd * nbp_usd):,.2f} PLN"
@@ -196,3 +246,16 @@ else:
     
     if incoterm == "EXW":
         st.write(f"- **Koszty lokalne EXW w Chinach:** `${exw_total_usd:.2f} USD` *(Odbiór z fabryki, odprawa i dokumenty)*")
+
+    st.divider()
+
+    # --- PRZYCISKI AKCJI ---
+    btn_col1, btn_col2 = st.columns(2)
+    
+    with btn_col1:
+        if st.button("📦 ZLEĆ TRANSPORT"):
+            order_dialog(city, display_total, target_currency)
+
+    with btn_col2:
+        if st.button("📞 ZAPYTAJ EKSPERTA"):
+            expert_dialog()
