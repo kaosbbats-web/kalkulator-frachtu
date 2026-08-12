@@ -1,6 +1,26 @@
 import streamlit as st
+import requests
 
 st.set_page_config(page_title="Kalkulator Frachtu BBA", page_icon="🔴", layout="centered")
+
+# --- POBIERANIE KURSU NBP ---
+@st.cache_data(ttl=3600)  # Kesżowanie kursu na 1h
+def get_nbp_rate(currency_code):
+    try:
+        url = f"https://api.nbp.pl/api/exchangerates/rates/a/{currency_code}/?format=json"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return float(data["rates"][0]["mid"])
+    except Exception:
+        pass
+    # Wartości awaryjne, gdyby API NBP nie odpowiedziało
+    fallback_rates = {"USD": 4.00, "EUR": 4.30}
+    return fallback_rates.get(currency_code, 1.0)
+
+# Pobranie kursów z NBP
+nbp_usd = get_nbp_rate("USD")
+nbp_eur = get_nbp_rate("EUR")
 
 # --- STYLOWANIE CSS ---
 st.markdown("""
@@ -92,18 +112,12 @@ RAIL_LCL_CITIES = {
     "BEIJING": {"less_300": 172, "more_300": 179}
 }
 
-# MARŻA DLA KLIENTA (DODAWANA DO STAWKI BAZOWEJ ZA CBM)
 def get_client_margin(cbm):
-    if cbm <= 1.0:
-        return 150
-    elif cbm <= 4.0:
-        return 90
-    elif cbm <= 10.0:
-        return 75
-    elif cbm <= 20.0:
-        return 50
-    else:
-        return 30
+    if cbm <= 1.0: return 150
+    elif cbm <= 4.0: return 90
+    elif cbm <= 10.0: return 75
+    elif cbm <= 20.0: return 50
+    else: return 30
 
 def get_pickup_cost(cbm):
     if cbm <= 0.5: return 30
@@ -122,7 +136,14 @@ service_type = st.selectbox(
 if "W BUDOWIE" in service_type:
     st.warning("🚧 Ta usługa jest obecnie w budowie. Wybierz **Kolej LCL (Drobnica)**.")
 else:
-    usd_rate = st.number_input("Kurs USD/PLN", min_value=3.0, value=4.00, step=0.01)
+    # Ustawienia kursów walut
+    c_curr1, c_curr2, c_curr3 = st.columns(3)
+    with c_curr1:
+        target_currency = st.radio("Waluta wyceny", ["PLN", "USD", "EUR"], horizontal=True)
+    with c_curr2:
+        usd_rate = st.number_input("Kurs USD/PLN (NBP)", min_value=1.0, value=nbp_usd, step=0.0001, format="%.4f")
+    with c_curr3:
+        eur_rate = st.number_input("Kurs EUR/PLN (NBP)", min_value=1.0, value=nbp_eur, step=0.0001, format="%.4f")
 
     st.divider()
 
@@ -134,18 +155,17 @@ else:
         weight = st.number_input("Waga całkowita (kg)", min_value=1.0, value=500.0, step=10.0)
         volume = st.number_input("Objętość (CBM)", min_value=0.1, value=2.0, step=0.1)
 
-    # Obliczenie gęstości i płatnego CBM
+    # Obliczenia
     density_ratio = weight / volume if volume > 0 else 0
     is_over_300 = density_ratio > 300
     rate_key = "more_300" if is_over_300 else "less_300"
     chargeable_cbm = max(volume, weight / 300)
 
-    # Obliczenie stawki końcowej dla klienta (Tabela + Wartość zależna od CBM)
     base_rate_usd = RAIL_LCL_CITIES[city][rate_key]
     margin = get_client_margin(chargeable_cbm)
-    final_rate_per_cbm = base_rate_usd + margin
+    final_rate_per_cbm_usd = base_rate_usd + margin
     
-    fob_freight_usd = chargeable_cbm * final_rate_per_cbm
+    fob_freight_usd = chargeable_cbm * final_rate_per_cbm_usd
 
     exw_total_usd = 0
     if incoterm == "EXW":
@@ -155,20 +175,32 @@ else:
 
     total_usd = fob_freight_usd + exw_total_usd
     total_pln = total_usd * usd_rate
+    total_eur = total_pln / eur_rate if eur_rate > 0 else 0
+
+    # Formatowanie wartości dla kafelka docelowego
+    if target_currency == "PLN":
+        display_total = f"{total_pln:,.2f} PLN"
+        display_rate = f"{(final_rate_per_cbm_usd * usd_rate):,.2f} PLN"
+    elif target_currency == "EUR":
+        display_total = f"€{total_eur:,.2f}"
+        display_rate = f"€{(final_rate_per_cbm_usd * usd_rate / eur_rate):,.2f}"
+    else:
+        display_total = f"${total_usd:,.2f}"
+        display_rate = f"${final_rate_per_cbm_usd:.0f}"
 
     st.subheader(f"📊 Wycena LCL: {city} ➔ Warszawa, Polska")
     
     c1, c2, c3 = st.columns(3)
     with c1:
-        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma USD</div><div class="bba-card-value">${total_usd:,.2f}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma ({target_currency})</div><div class="bba-card-value">{display_total}</div></div>', unsafe_allow_html=True)
     with c2:
-        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma PLN</div><div class="bba-card-value">{total_pln:,.2f} PLN</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Suma USD</div><div class="bba-card-value">${total_usd:,.2f}</div></div>', unsafe_allow_html=True)
     with c3:
-        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Stawka za CBM</div><div class="bba-card-value">${final_rate_per_cbm:.0f}</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="bba-card"><div class="bba-card-title">Stawka/CBM ({target_currency})</div><div class="bba-card-value">{display_rate}</div></div>', unsafe_allow_html=True)
 
     st.write("### Podsumowanie wyceny:")
     st.write(f"- **Płatna objętość:** `{chargeable_cbm:.2f} CBM` *(Waga: {weight:.0f} kg | Objętość: {volume:.2f} CBM)*")
-    st.write(f"- **Fracht główny (FOB):** `${fob_freight_usd:.2f} USD` *(Stawka: ${final_rate_per_cbm:.0f}/CBM)*")
+    st.write(f"- **Fracht główny (FOB):** `${fob_freight_usd:.2f} USD` *(Suma w PLN: {fob_freight_usd * usd_rate:,.2f} zł)*")
     
     if incoterm == "EXW":
         st.write(f"- **Koszty lokalne EXW w Chinach:** `${exw_total_usd:.2f} USD` *(Odbiór z fabryki, odprawa i dokumenty)*")
