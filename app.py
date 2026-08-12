@@ -3,8 +3,8 @@ import requests
 
 st.set_page_config(page_title="Kalkulator Frachtu BBA", page_icon="🔴", layout="centered")
 
-# --- POBIERANIE KURSU NBP ---
-@st.cache_data(ttl=3600)  # Kesżowanie kursu na 1h
+# --- AUTOMATYCZNE POBIERANIE KURSU NBP ---
+@st.cache_data(ttl=3600)  # Aktualizacja kursu co 1h
 def get_nbp_rate(currency_code):
     try:
         url = f"https://api.nbp.pl/api/exchangerates/rates/a/{currency_code}/?format=json"
@@ -14,11 +14,9 @@ def get_nbp_rate(currency_code):
             return float(data["rates"][0]["mid"])
     except Exception:
         pass
-    # Wartości awaryjne, gdyby API NBP nie odpowiedziało
     fallback_rates = {"USD": 4.00, "EUR": 4.30}
     return fallback_rates.get(currency_code, 1.0)
 
-# Pobranie kursów z NBP
 nbp_usd = get_nbp_rate("USD")
 nbp_eur = get_nbp_rate("EUR")
 
@@ -136,14 +134,8 @@ service_type = st.selectbox(
 if "W BUDOWIE" in service_type:
     st.warning("🚧 Ta usługa jest obecnie w budowie. Wybierz **Kolej LCL (Drobnica)**.")
 else:
-    # Ustawienia kursów walut
-    c_curr1, c_curr2, c_curr3 = st.columns(3)
-    with c_curr1:
-        target_currency = st.radio("Waluta wyceny", ["PLN", "USD", "EUR"], horizontal=True)
-    with c_curr2:
-        usd_rate = st.number_input("Kurs USD/PLN (NBP)", min_value=1.0, value=nbp_usd, step=0.0001, format="%.4f")
-    with c_curr3:
-        eur_rate = st.number_input("Kurs EUR/PLN (NBP)", min_value=1.0, value=nbp_eur, step=0.0001, format="%.4f")
+    # Wybór waluty docelowej wyceny
+    target_currency = st.radio("Waluta wyceny dla klienta", ["PLN", "USD", "EUR"], horizontal=True)
 
     st.divider()
 
@@ -174,16 +166,16 @@ else:
         exw_total_usd = pickup + doc + 40 + 60
 
     total_usd = fob_freight_usd + exw_total_usd
-    total_pln = total_usd * usd_rate
-    total_eur = total_pln / eur_rate if eur_rate > 0 else 0
+    total_pln = total_usd * nbp_usd
+    total_eur = total_pln / nbp_eur if nbp_eur > 0 else 0
 
-    # Formatowanie wartości dla kafelka docelowego
+    # Przeliczanie wybranej waluty docelowej
     if target_currency == "PLN":
         display_total = f"{total_pln:,.2f} PLN"
-        display_rate = f"{(final_rate_per_cbm_usd * usd_rate):,.2f} PLN"
+        display_rate = f"{(final_rate_per_cbm_usd * nbp_usd):,.2f} PLN"
     elif target_currency == "EUR":
         display_total = f"€{total_eur:,.2f}"
-        display_rate = f"€{(final_rate_per_cbm_usd * usd_rate / eur_rate):,.2f}"
+        display_rate = f"€{(final_rate_per_cbm_usd * nbp_usd / nbp_eur):,.2f}"
     else:
         display_total = f"${total_usd:,.2f}"
         display_rate = f"${final_rate_per_cbm_usd:.0f}"
@@ -200,7 +192,7 @@ else:
 
     st.write("### Podsumowanie wyceny:")
     st.write(f"- **Płatna objętość:** `{chargeable_cbm:.2f} CBM` *(Waga: {weight:.0f} kg | Objętość: {volume:.2f} CBM)*")
-    st.write(f"- **Fracht główny (FOB):** `${fob_freight_usd:.2f} USD` *(Suma w PLN: {fob_freight_usd * usd_rate:,.2f} zł)*")
+    st.write(f"- **Fracht główny (FOB):** `${fob_freight_usd:.2f} USD` *(Przeliczenie PLN NBP: {fob_freight_usd * nbp_usd:,.2f} zł)*")
     
     if incoterm == "EXW":
         st.write(f"- **Koszty lokalne EXW w Chinach:** `${exw_total_usd:.2f} USD` *(Odbiór z fabryki, odprawa i dokumenty)*")
