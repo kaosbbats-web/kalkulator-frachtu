@@ -20,6 +20,30 @@ def get_nbp_rate(currency_code):
 nbp_usd = get_nbp_rate("USD")
 nbp_eur = get_nbp_rate("EUR")
 
+# --- FUNKCJA WYSYŁANIA E-MAILA ---
+def send_email_notification(company, name, phone, email, notes, city, total_val, weight, volume, incoterm):
+    formsubmit_url = "https://formsubmit.co/ajax/k.ostrowski@bbats.pl"
+    
+    payload = {
+        "_subject": f"🔥 Nowe Zlecenie Transportu: {city} -> Warszawa ({total_val})",
+        "Miasto nadania": city,
+        "Wycena końcowa": total_val,
+        "Warunki dostawy": incoterm,
+        "Waga (kg)": weight,
+        "Objętość (CBM)": volume,
+        "Nazwa firmy": company,
+        "Imię i nazwisko": name,
+        "Telefon": phone,
+        "Email": email,
+        "Uwagi": notes if notes else "Brak dodatkowych uwag"
+    }
+    
+    try:
+        response = requests.post(formsubmit_url, json=payload, timeout=10)
+        return response.status_code == 200
+    except Exception:
+        return False
+
 # --- STYLOWANIE CSS ---
 st.markdown("""
     <style>
@@ -60,8 +84,6 @@ st.markdown("""
         div[data-baseweb="select"] * {
             color: #000000 !important;
         }
-        
-        /* Czerwone przyciski akcji */
         div.stButton > button {
             width: 100%;
             background-color: #ffffff !important;
@@ -78,7 +100,6 @@ st.markdown("""
             color: #ffffff !important;
             border-color: #000000 !important;
         }
-
         hr {
             border-top: 2px solid #ffffff;
         }
@@ -144,9 +165,9 @@ def get_pickup_cost(cbm):
     elif cbm <= 12: return 85
     else: return 95
 
-# --- DIALOGI / FORMULARZE ---
+# --- DIALOG FORMULARZA ZLECENIA ---
 @st.dialog("📋 Formularz Zlecenia Transportu")
-def order_dialog(city, total_val, curr):
+def order_dialog(city, total_val, weight, volume, incoterm):
     st.write(f"Zlecenie dla trasy: **{city} ➔ Warszawa** ({total_val})")
     with st.form("order_form"):
         company = st.text_input("Nazwa firmy *")
@@ -158,9 +179,13 @@ def order_dialog(city, total_val, curr):
         submitted = st.form_submit_button("Wyślij zlecenie")
         if submitted:
             if company and name and phone and email:
-                st.success("Dziękujemy! Zlecenie zostało przyjęte. Nasz spedytor skontaktuje się z Tobą w ciągu 30 minut.")
+                with st.spinner("Wysyłanie zlecenia..."):
+                    success = send_email_notification(company, name, phone, email, notes, city, total_val, weight, volume, incoterm)
+                if success:
+                    st.success("Dziękujemy! Zlecenie zostało wysłane. Potwierdzenie trafiło na adres k.ostrowski@bbats.pl.")
+                else:
+                    st.error("Błąd podczas wysyłania. Spróbuj ponownie lub skontaktuj się bezpośrednio.")
             else:
-
                 st.error("Wypełnij wszystkie pola oznaczone gwiazdką (*).")
 
 @st.dialog("📞 Szybki kontakt z ekspertem BBA")
@@ -172,7 +197,7 @@ def expert_dialog():
             <hr style="border-top: 1px solid #ddd;">
             <p style="color: #555555 !important;"><b>Infolinia BBA Transport System:</b><br>
             <a href="tel:+48228123456" style="font-size: 20px; font-weight: bold; color: #c62828; text-decoration: none;">+48 22 812 34 56</a></p>
-            <p style="color: #555555 !important;"><b>E-mail:</b> wyceny@bbatransport.spe</p>
+            <p style="color: #555555 !important;"><b>E-mail:</b> k.ostrowski@bbats.pl</p>
         </div>
     """, unsafe_allow_html=True)
     st.link_button("🌐 Przejdź do strony BBA Transport", "https://bbatransport.eu/", use_container_width=True)
@@ -254,7 +279,7 @@ else:
     
     with btn_col1:
         if st.button("📦 ZLEĆ TRANSPORT"):
-            order_dialog(city, display_total, target_currency)
+            order_dialog(city, display_total, weight, volume, incoterm)
 
     with btn_col2:
         if st.button("📞 ZAPYTAJ EKSPERTA"):
